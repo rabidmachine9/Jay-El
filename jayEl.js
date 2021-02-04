@@ -19,16 +19,16 @@ export function tokenizer(st){
             else{
                 tokens.push({type: 'IND', atom});
             }
-            if(char === ')') tokens.push(char);
+            if(char === ')' || char === '(') tokens.push(char);
             atom = '';
         }else if(char.match(/("|')/)){
-            let firstQuoteIndex = i;
-            atom += char;
-            do{
-                i++;
+            let firstChar = char;
+            i++; //skipping character
+            while(st[i] !== firstChar){
                 atom += st[i];
-            }while(st[i] !== char && firstQuoteIndex !== i);
-
+                i++;
+            }
+            i++;//skipping character
             tokens.push({type: 'STR', atom});
             atom = '';
         }
@@ -63,13 +63,13 @@ function tokens_to_arrays(tokens){
 }
 
 
-function evaluate(atom){
+export function evaluate(atom){
     //console.log("Evaluating",JSON.stringify(atom,null,2));
     if(!Array.isArray(atom)){
         if(atom.type === 'NUM'){
             return Number(atom.atom);
         }else if(atom.type === 'STR'){
-            return String(atom.atom).slice(1, -1);
+            return String(atom.atom);
         }else if(atom.type === 'IND'){
             //console.log('Identifier',atom);
             return context[String(atom.atom)]
@@ -94,10 +94,11 @@ function evaluate(atom){
 }
 
 
-function execute(code){
+export function execute(code){
     let tokens = tokenizer(code);
     let arr_tokens = tokens_to_arrays(tokens);
-    arr_tokens.forEach(function(atom){
-        evaluate(atom);
-    });
+    // arr_tokens.forEach(function(atom){
+    //     evaluate(atom);
+    // });
+    return evaluate(arr_tokens);
 }

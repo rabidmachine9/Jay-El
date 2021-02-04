@@ -1,3 +1,4 @@
+import {evaluate} from "./jayEl.js";
 export let keywords = ['def', 'let', 'say', 'car', 'cdr','cons', 'list?', 'null?'];
 
 export var context = {
