@@ -1,9 +1,7 @@
 import {evaluate} from "./jayEl.js";
 export let keywords = ['def', 'let', 'say', 'car', 'cdr','cons', 'list?', 'null?'];
 
-export var context = {
-
-};
+export var topContext = new Context(null);
 
 
 export var operation = {
@@ -77,12 +75,22 @@ export var special = {
     },
     'let':
     function(list){
-        context[list[0].atom] = evaluate(list[1]);
+        topContext[list[0].atom] = evaluate(list[1]);
     },
     'def':
     function(list){
-        console.log(JSON.stringify(list,null,2));
-        context[list[0].atom] = {};
+        console.log('inside def', JSON.stringify(list,null,2));
+        let method_name = list[0].atom;
+        context[method_name] = {};
+        context[method_name]['args'] = [];
+        //context[method_name]['args'] = list[1].map(function(el){return el.atom});
+        list[1].forEach(function(el){
+            context[method_name]['args'].push({name: String(el.atom), value: null});
+        });
+        context[method_name]['method'] = list[2];
+        console.log('context', JSON.stringify(context,null,2));
+        // console.log(arguments);
+        
     }
 };
 

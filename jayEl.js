@@ -1,6 +1,7 @@
 import {context, keywords, operation, special, boolean} from './configuration.js';
 
 
+
 export function tokenizer(st){
     let tokens = new Array;
     let atom = '';
@@ -71,13 +72,20 @@ export function evaluate(atom){
         }else if(atom.type === 'STR'){
             return String(atom.atom);
         }else if(atom.type === 'IND'){
+            console.log('single IND')
             //console.log('Identifier',atom);
-            return context[String(atom.atom)]
+            if(context[String(atom.atom)] != undefined){
+                //it is a variable
+                if(context[String(atom.atom)]['method'] == undefined){
+                    return context[String(atom.atom)];
+                }
+            };
         }
     }
 
     if(Array.isArray(atom)){
         let first_atom = atom.shift();
+        console.log("first atom",first_atom);
         if(Array.isArray(first_atom)){
             return evaluate(first_atom);
         }else if(first_atom.type === 'OPER'){
@@ -86,6 +94,16 @@ export function evaluate(atom){
             return special[first_atom.atom](atom);
         }else if(first_atom.type === 'BOOL'){
             return boolean[first_atom.atom](atom);
+        }else if(first_atom.type === 'IND'){
+            console.log('found IND');
+            if(context[String(first_atom.atom)]['method'] == undefined){
+                return context[String(atom.atom)];
+            }else{
+                atom.forEach(function(arg,i){
+                    context[first_atom]['args'][i] = arg;
+                });
+                console.log("context",JSON.stringify(context,null,2));    
+            }
         }else{
             //console.log('returning a list');
             return atom;
@@ -97,8 +115,11 @@ export function evaluate(atom){
 export function execute(code){
     let tokens = tokenizer(code);
     let arr_tokens = tokens_to_arrays(tokens);
-    // arr_tokens.forEach(function(atom){
-    //     evaluate(atom);
-    // });
-    return evaluate(arr_tokens);
+    console.log("Tokens", JSON.stringify(arr_tokens,null,2));
+    var result;
+    arr_tokens.forEach(function(atom){
+        console.log("Array Token",JSON.stringify(atom,null,2));
+        result = evaluate(atom);
+    });
+    return result;
 }
