@@ -1,111 +1,126 @@
 import {evaluate} from "./jayEl.js";
-export let keywords = ['def', 'let', 'say', 'car', 'cdr','cons', 'list?', 'null?'];
+import {Context} from "./context.js";
+
+export let keywords = ['def', 'let', 'say', 'car', 'cdr','cons', 'list?', 'null?', 'if'];
+
 
 export var topContext = new Context(null);
 
 
 export var operation = {
     '+': 
-    function(list) { 
+    function(context,list) { 
         return list.reduce((a, b) => { 
-            return a + evaluate(b)
+            return a + evaluate(context,b)
         },0);
     },
     '-': 
-    function(list) {
+    function(context,list) {
         let first_el = list.shift();
         let result = list.reduce((a, b) => {
-            return a - evaluate(b)
-        },evaluate(first_el));
+            return a - evaluate(context,b)
+        },evaluate(context,first_el));
         return result;
     },
     '*': 
-    function(list) {
+    function(context,list) {
         let first_el = list.shift();
         let result = list.reduce((a, b) => {
-            return a * evaluate(b)
-        },evaluate(first_el));
+            return a * evaluate(context,b)
+        },evaluate(context,first_el));
         return result;
     },
     '/': 
-    function(list) {
+    function(context,list) {
         let first_el = list.shift();
         let result = list.reduce((a, b) => {
-            return a / evaluate(b)
-        },evaluate(first_el));
+            return a / evaluate(context,b)
+        },evaluate(context,first_el));
         return result;
     },
     '%':
-    function(list){
-        return evaluate(list[0]) % evaluate(list[1]);
+    function(context,list){
+        return evaluate(context,list[0]) % evaluate(context,list[1]);
     },
 };
 
 export var special = {
+    'if':
+    function(context, list){
+        if(evaluate(context, list[0])){
+            return evaluate(context,list[1]);
+        }else if(list[2] !== 'undefined'){
+            return evaluate(context,list[2]);
+        }
+    },
     'say':
-    function(some_string){
-        return evaluate(some_string);
+    function(context,some_string){
+        return evaluate(context,some_string);
     },
     'car':
-    function(list){
+    function(context,list){
         //onsole.log(JSON.stringify(list,null,2));
-        return evaluate(list[0][0]);
+        return evaluate(context,list[0][0]);
     },
     'cdr':
-    function(list){
+    function(context,list){
         //console.log(JSON.stringify(list,null,2));
         let the_list = list[0];
         the_list.shift();
-        return the_list.map(evaluate);
+        return the_list.map(x => evaluate(context, x));
     },
     'cons':
-    function(list){
+    function(context,list){
         let atom = list[0];
         let the_list = list[1];
         the_list.unshift(atom);
-        return the_list.map(evaluate);
+        return the_list.map(x => evaluate(context, x));
     },
     'list?':
-    function(list){
+    function(context,list){
         return Array.isArray(list[0]);
     },
     'null?':
-    function(list){
+    function(context,list){
         return (list.length === 0 ? true : false); 
     },
     'let':
-    function(list){
-        topContext[list[0].atom] = evaluate(list[1]);
+    function(context,list){
+        context[list[0].atom] = evaluate(context,list[1]);
     },
     'def':
-    function(list){
-        console.log('inside def', JSON.stringify(list,null,2));
+    function(context,list){
+        //console.log('inside def', JSON.stringify(list,null,2));
         let method_name = list[0].atom;
         context[method_name] = {};
         context[method_name]['args'] = [];
         //context[method_name]['args'] = list[1].map(function(el){return el.atom});
-        list[1].forEach(function(el){
-            context[method_name]['args'].push({name: String(el.atom), value: null});
+        list[1].forEach(function(el,i){
+            context[method_name]['args'][i] = {name: String(el.atom)};
         });
         context[method_name]['method'] = list[2];
-        console.log('context', JSON.stringify(context,null,2));
-        // console.log(arguments);
+        //console.log('context', JSON.stringify(topContext,null,2));
+        //console.log(arguments);
         
     }
 };
 
 export var boolean = {
     '==':
-    function(list){
+    function(context, list){
         //console.log(JSON.stringify(list,null,2));
-        return (evaluate(list[0]) === evaluate(list[1])? true : false);
+        return (evaluate(context, list[0]) === evaluate(context,list[1])? true : false);
     },
     '>':
-    function(list){
-        return (list[0] > list[1]);
+    function(context,list){
+        return (evaluate(context, list[0]) > evaluate(context,list[1]));
     },
     '<':
-    function(list){
-        return (list[0] < list[1]);
+    function(context,list){
+        return (evaluate(context,list[0]) < evaluate(context,list[1]));
     },
+    '!=':
+    function(context, list){
+        return (evaluate(context,list[0]) !== evaluate(context,list[1]));
+    }
 };
